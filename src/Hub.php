@@ -2,6 +2,7 @@
 
 namespace Cognesy\InstructorHub;
 
+use Cognesy\Config\BasePath;
 use Cognesy\InstructorHub\Commands\ClearDocs;
 use Cognesy\InstructorHub\Commands\GenerateDocs;
 use Cognesy\InstructorHub\Commands\ListAllExamples;
@@ -13,7 +14,6 @@ use Cognesy\InstructorHub\Core\CommandProvider;
 use Cognesy\InstructorHub\Services\ExampleRepository;
 use Cognesy\InstructorHub\Services\MintlifyDocGenerator;
 use Cognesy\InstructorHub\Services\Runner;
-use Cognesy\Utils\BasePath;
 
 class Hub extends CliApp
 {
@@ -57,7 +57,12 @@ class Hub extends CliApp
             ]
         );
 
-        $runner = new Runner($exampleRepo, true, 0, true);
+        $runner = new Runner(
+            examples: $exampleRepo,
+            displayErrors: true,
+            stopAfter: 0,
+            stopOnError: false
+        );
 
         $commands = [
             new GenerateDocs($docGen),
