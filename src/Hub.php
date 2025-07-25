@@ -3,76 +3,49 @@
 namespace Cognesy\InstructorHub;
 
 use Cognesy\Config\BasePath;
-use Cognesy\InstructorHub\Commands\ClearDocs;
-use Cognesy\InstructorHub\Commands\GenerateDocs;
 use Cognesy\InstructorHub\Commands\ListAllExamples;
 use Cognesy\InstructorHub\Commands\RunAllExamples;
 use Cognesy\InstructorHub\Commands\RunOneExample;
 use Cognesy\InstructorHub\Commands\ShowExample;
-use Cognesy\InstructorHub\Core\CliApp;
-use Cognesy\InstructorHub\Core\CommandProvider;
 use Cognesy\InstructorHub\Services\ExampleRepository;
-use Cognesy\InstructorHub\Services\MintlifyDocGenerator;
 use Cognesy\InstructorHub\Services\Runner;
+use Symfony\Component\Console\Application;
 
-class Hub extends CliApp
+class Hub extends Application
 {
-    public string $name = "Hub // Instructor for PHP";
-    public string $description = " (^) Get typed structured outputs from LLMs";
+    private ExampleRepository $exampleRepo;
+    private Runner $runner;
 
-    public function __construct()
+    public function __construct() {
+        parent::__construct('Hub // Instructor for PHP', '1.0.0');
+        //$this->setDescription('(^) Get typed structured outputs from LLMs');
+
+        $this->registerServices();
+        $this->registerCommands();
+    }
+
+    private function registerServices(): void
     {
-        $exampleRepo = new ExampleRepository(
+        $this->exampleRepo = new ExampleRepository(
             BasePath::get('examples'),
         );
-
-        $docGen = new MintlifyDocGenerator(
-            examples: $exampleRepo,
-            docsSourceDir: BasePath::get('docs'),
-            docsTargetDir: BasePath::get('docs-build'),
-            cookbookTargetDir: BasePath::get('docs-build/cookbook'),
-            mintlifySourceIndexFile: BasePath::get('docs/mint.json'),
-            mintlifyTargetIndexFile: BasePath::get('docs-build/mint.json'),
-            dynamicGroups: [
-                'Cookbook \ Instructor \ Basics',
-                'Cookbook \ Instructor \ Advanced',
-                'Cookbook \ Instructor \ Prompting',
-                'Cookbook \ Instructor \ Troubleshooting',
-                'Cookbook \ Instructor \ API Support',
-
-                "Cookbook \ Polyglot \ LLM Basics",
-                "Cookbook \ Polyglot \ LLM Advanced",
-                "Cookbook \ Polyglot \ LLM Troubleshooting",
-                "Cookbook \ Polyglot \ LLM API Support",
-                "Cookbook \ Polyglot \ LLM Extras",
-
-                'Cookbook \ Prompting \ Extras',
-                'Cookbook \ Prompting \ Zero-Shot Prompting',
-                'Cookbook \ Prompting \ Few-Shot Prompting',
-                'Cookbook \ Prompting \ Thought Generation',
-                'Cookbook \ Prompting \ Ensembling',
-                'Cookbook \ Prompting \ Self-Criticism',
-                'Cookbook \ Prompting \ Decomposition',
-                'Cookbook \ Prompting \ Miscellaneous',
-            ]
-        );
-
-        $runner = new Runner(
-            examples: $exampleRepo,
+        $this->runner = new Runner(
+            examples: $this->exampleRepo,
             displayErrors: true,
             stopAfter: 0,
-            stopOnError: false
+            stopOnError: false,
         );
 
-        $commands = [
-            new GenerateDocs($docGen),
-            new ClearDocs($docGen),
-            new ListAllExamples($exampleRepo),
-            new RunAllExamples($runner),
-            new RunOneExample($runner, $exampleRepo),
-            new ShowExample($exampleRepo),
-        ];
+    }
 
-        parent::__construct(new CommandProvider($commands));
+    private function registerCommands(): void
+    {
+        // Register example-related commands
+        $this->addCommands([
+            new ListAllExamples($this->exampleRepo),
+            new RunAllExamples($this->runner),
+            new RunOneExample($this->runner, $this->exampleRepo),
+            new ShowExample($this->exampleRepo),
+        ]);
     }
 }
