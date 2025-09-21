@@ -20,13 +20,15 @@ This example demonstrates a sophisticated multi-participant chat system featurin
 require 'examples/boot.php';
 
 use Cognesy\Addons\Chat\ChatFactory;
-use Cognesy\Addons\Chat\ContinuationCriteria\ResponseContentCheck;
-use Cognesy\Addons\Chat\ContinuationCriteria\StepsLimit;
+use Cognesy\Addons\Chat\Collections\Participants;
 use Cognesy\Addons\Chat\Data\ChatState;
-use Cognesy\Addons\Chat\Data\Collections\ContinuationCriteria;
-use Cognesy\Addons\Chat\Data\Collections\Participants;
 use Cognesy\Addons\Chat\Participants\LLMParticipant;
 use Cognesy\Addons\Chat\Participants\ScriptedParticipant;
+use Cognesy\Addons\Core\Continuation\ContinuationCriteria;
+use Cognesy\Addons\Core\Continuation\Criteria\ResponseContentCheck;
+use Cognesy\Addons\Core\Continuation\Criteria\StepsLimit;
+use Cognesy\Messages\Message;
+use Cognesy\Messages\Messages;
 use Cognesy\Polyglot\Inference\LLMProvider;
 
 echo "🎙️ AI PANEL DISCUSSION: The Future of AI Development\n";
@@ -62,20 +64,23 @@ $engineer = new LLMParticipant(
 $chat = ChatFactory::default(
     participants: new Participants($moderator, $engineer, $researcher),
     continuationCriteria: new ContinuationCriteria(
-        new StepsLimit(15),
-        new ResponseContentCheck(fn($lastResponse) => $lastResponse !== ''),
+        new StepsLimit(15, fn(ChatState $state): int => $state->stepCount()),
+        new ResponseContentCheck(
+            fn(ChatState $state): ?Messages => $state->currentStep()?->outputMessages(),
+            static fn(Message $lastResponse): bool => $lastResponse->content()->toString() !== '',
+        ),
     ),
 ); //->wiretap(fn(Event $e) => $e->print());
 
 $state = new ChatState();
 
-while ($chat->hasNextTurn($state)) {
-    $state = $chat->nextTurn($state);
+while ($chat->hasNextStep($state)) {
+    $state = $chat->nextStep($state);
     $step = $state->currentStep();
 
     if ($step) {
         $participantName = $step->participantName();
-        $content = trim($step->outputMessage()->toString());
+        $content = trim($step->outputMessages()->toString());
         
         // Only display if there's actual content
         if (!empty($content)) {
