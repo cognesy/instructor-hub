@@ -15,6 +15,8 @@ use Toolkit\Cli\Util\Highlighter;
  * @package PhpPkg\CliMarkdown
  * @link    https://github.com/charmbracelet/glow color refer
  * @license MIT
+ *
+ * @phpstan-type Block array<mixed>
  */
 class CliMarkdown extends GithubMarkdown
 {
@@ -41,6 +43,7 @@ class CliMarkdown extends GithubMarkdown
         $this->lang = $lang;
     }
 
+    #[\Override]
     public function parse($text): string {
         $parsed = parent::parse($text);
 
@@ -53,7 +56,9 @@ class CliMarkdown extends GithubMarkdown
         return Color::parseTag($parsed);
     }
 
-    protected function renderHeadline($block): string {
+    #[\Override]
+    protected function renderHeadline(mixed $block): string {
+        assert(is_array($block));
         $level = (int)$block['level'];
 
         $prefix = str_repeat('#', $level);
@@ -76,11 +81,15 @@ class CliMarkdown extends GithubMarkdown
         //return self::NL . ColorTag::add($hlText, $this->theme['headline']) . self::NL2;
     }
 
-    protected function renderParagraph($block): string {
+    #[\Override]
+    protected function renderParagraph(mixed $block): string {
+        assert(is_array($block));
         return self::NL . $this->renderAbsy($block['content']) . self::NL;
     }
 
-    protected function renderList($block): string {
+    #[\Override]
+    protected function renderList(mixed $block): string {
+        assert(is_array($block));
         $output = self::NL;
 
         foreach ($block['items'] as $itemLines) {
@@ -90,7 +99,9 @@ class CliMarkdown extends GithubMarkdown
         return $output . self::NL2;
     }
 
-    protected function renderTable($block): string {
+    #[\Override]
+    protected function renderTable(mixed $block): string {
+        assert(is_array($block));
         $head = $body = '';
 
         $tabInfo = ['width' => 60];
@@ -157,16 +168,21 @@ class CliMarkdown extends GithubMarkdown
         return $width;
     }
 
-    protected function renderLink($block): string {
+    #[\Override]
+    protected function renderLink(mixed $block): string {
+        assert(is_array($block));
         return Cli::str($block['orig'], $this->theme['link']);
         //return ColorTag::add('♆ ' . $block['orig'], $this->theme['link']);
     }
 
-    protected function renderUrl($block): string {
+    #[\Override]
+    protected function renderUrl(mixed $block): string {
         return parent::renderUrl($block);
     }
 
-    protected function renderAutoUrl($block): string {
+    #[\Override]
+    protected function renderAutoUrl(mixed $block): string {
+        assert(is_array($block));
         $tag = $this->theme['link'];
         $url = $text = $block[1];
 
@@ -177,11 +193,15 @@ class CliMarkdown extends GithubMarkdown
         return sprintf('<%s>[%s]%s</%s>', $tag, $text, $url, $tag);
     }
 
-    protected function renderImage($block): string {
+    #[\Override]
+    protected function renderImage(mixed $block): string {
+        assert(is_array($block));
         return self::NL . Color::addTag('▨ ' . $block['orig'], $this->theme['image']);
     }
 
-    protected function renderQuote($block): string {
+    #[\Override]
+    protected function renderQuote(mixed $block): string {
+        assert(is_array($block));
         // ¶ §
         //$prefix = Color::render('¶ ', [Color::FG_GREEN, Color::BOLD]);
         //$content = ltrim($this->renderAbsy($block['content']));
@@ -195,7 +215,9 @@ class CliMarkdown extends GithubMarkdown
         ]);
     }
 
-    protected function renderCode($block): string {
+    #[\Override]
+    protected function renderCode(mixed $block): string {
+        assert(is_array($block));
         $highlighted = Highlighter::create()->highlight($block['content']);
         $lines = explode("\n", $highlighted);
         // add line numbers to each line
@@ -225,19 +247,28 @@ class CliMarkdown extends GithubMarkdown
         return implode('', $out);
     }
 
-    protected function renderInlineCode($block): string {
+    #[\Override]
+    protected function renderInlineCode(mixed $block): string {
+        assert(is_array($block));
         return Cli::str($block[1], $this->theme['inlineCode']);
         //return ColorTag::add($block[1], $this->theme['inlineCode']);
     }
 
-    protected function renderStrong($block): string {
+    #[\Override]
+    protected function renderStrong(mixed $block): string {
+        assert(is_array($block));
         $text = $this->renderAbsy($block[1]);
 
         return ColorTag::add("**$text**", $this->theme['strong']);
     }
 
-    protected function renderText($text): string {
-        return $text[1];
+    /**
+     * @psalm-suppress ParamNameMismatch Vendor library cebe/markdown has inconsistent param names: Parser uses $block, Markdown/GithubMarkdown use $text
+     */
+    #[\Override]
+    protected function renderText(mixed $block): string {
+        assert(is_array($block));
+        return $block[1];
     }
 
     public function getTheme(): array {

@@ -35,7 +35,9 @@ class User {
 
 // Get Instructor with specified LLM client connection
 // See: /config/llm.php to check or change LLM client connection configuration details
-$structuredOutput = (new StructuredOutput)->using('huggingface');
+$structuredOutput = (new StructuredOutput)
+    ->using('huggingface');
+    //->withDebugPreset('on');
 
 $user = $structuredOutput
     ->with(
@@ -43,7 +45,7 @@ $user = $structuredOutput
         responseModel: User::class,
         prompt: 'Parse the user data to JSON, respond using following JSON Schema: <|json_schema|>',
         examples: [[
-                      'input' => 'Ive got email Frank - their developer, who\'s 30. He asked to come back to him frank@hk.ch. Btw, he plays on drums!',
+                      'input' => 'I\'ve got email Frank - their developer, who\'s 30. He asked to come back to him frank@hk.ch. Btw, he plays on drums!',
                       'output' => ['firstName' => 'Frank', 'age' => 30, 'username' => 'frank@hk.ch', 'role' => 'user', 'hobbies' => ['playing drums'],],
                   ],[
                       'input' => 'We have a meeting with John, our new admin who likes surfing. He is 19 years old - check his profile: @jx90.',

@@ -22,7 +22,7 @@ $answer = (new Inference)
     ->using('perplexity') // see /config/llm.php
     ->with(
         messages: [['role' => 'user', 'content' => 'What is the capital of France']],
-        options: ['max_tokens' => 64]
+        options: ['max_tokens' => 256]
     )
     ->get();
 

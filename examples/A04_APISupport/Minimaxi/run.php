@@ -41,16 +41,18 @@ class User {
 // See: /config/llm.php to check or change LLM client connection configuration details
 $structuredOutput = (new StructuredOutput)->using('minimaxi');
 
-$user = $structuredOutput->with(
-    messages: "Jason (@jxnlco) is 25 years old and is the admin of this project. He likes playing football and reading books.",
-    responseModel: User::class,
-    examples: [[
-        'input' => 'Ive got email Frank - their developer, who\'s 30. His Twitter handle is @frankch. Btw, he plays on drums!',
-        'output' => ['age' => 30, 'name' => 'Frank', 'username' => '@frankch', 'role' => 'developer', 'hobbies' => ['playing drums'],],
-    ]],
-    model: 'MiniMax-Text-01', // set your own value/source
-    mode: OutputMode::MdJson,
-)->get();
+$user = $structuredOutput
+    ->with(
+        messages: "Jason (@jxnlco) is 25 years old and is the admin of this project. He likes playing football and reading books.",
+        responseModel: User::class,
+        examples: [[
+            'input' => 'Ive got email Frank - their developer, who\'s 30. His Twitter handle is @frankch. Btw, he plays on drums!',
+            'output' => ['age' => 30, 'name' => 'Frank', 'username' => '@frankch', 'role' => 'developer', 'hobbies' => ['playing drums'],],
+        ]],
+        model: 'MiniMax-Text-01', // set your own value/source
+        mode: OutputMode::MdJson,
+    )
+    ->get();
 
 print("Completed response model:\n\n");
 
