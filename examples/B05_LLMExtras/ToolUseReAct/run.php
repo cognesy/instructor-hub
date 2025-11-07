@@ -1,6 +1,6 @@
 ---
-title: 'Inference and tool use'
-docname: 'tool_use'
+title: 'Inference and tool use (ReAct driver)'
+docname: 'tool_use_react'
 ---
 
 ## Overview
