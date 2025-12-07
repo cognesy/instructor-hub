@@ -1,12 +1,12 @@
 ---
-title: 'PSR-3 Logging with Functional Pipeline'
-docname: 'logging_psr'
+title: 'Symfony Logging Integration'
+docname: 'logging_symfony'
 path: ''
 ---
 
 ## Overview
 
-Simple PSR-3 logging integration using Instructor's functional pipeline.
+Symfony integration with Instructor's functional logging pipeline.
 
 ## Example
 
@@ -16,30 +16,42 @@ require 'examples/boot.php';
 use Cognesy\Instructor\StructuredOutput;
 use Cognesy\Logging\Pipeline\LoggingPipeline;
 use Cognesy\Logging\Filters\LogLevelFilter;
+use Cognesy\Logging\Enrichers\LazyEnricher;
 use Cognesy\Logging\Formatters\MessageTemplateFormatter;
 use Cognesy\Logging\Writers\PsrLoggerWriter;
-use Monolog\Handler\StreamHandler;
+use Symfony\Component\DependencyInjection\Container;
+use Symfony\Component\HttpFoundation\Request;
 use Monolog\Logger;
+use Monolog\Handler\StreamHandler;
 
-// Create PSR-3 logger
+// Mock Symfony container and request
+$container = new Container();
+$request = Request::create('/api/extract');
+$request->headers->set('X-Request-ID', 'req_' . uniqid());
+$request->attributes->set('_route', 'api.extract');
+
+// Create logger
 $logger = new Logger('instructor');
 $logger->pushHandler(new StreamHandler('php://stdout', Logger::DEBUG));
 
-// Create logging pipeline - filters to only StructuredOutput events
+// Create pipeline with Symfony context
 $pipeline = LoggingPipeline::create()
     ->filter(new LogLevelFilter('debug'))
+    ->enrich(LazyEnricher::framework(fn() => [
+        'request_id' => $request->headers->get('X-Request-ID'),
+        'route' => $request->attributes->get('_route'),
+    ]))
     ->format(new MessageTemplateFormatter([
         \Cognesy\Instructor\Events\StructuredOutput\StructuredOutputStarted::class =>
-            '🎯 [PSR-3] Starting extraction: {responseClass}',
+            '🎯 [SYMFONY] Starting extraction: {responseClass} (Route: {framework.route})',
         \Cognesy\Instructor\Events\StructuredOutput\StructuredOutputResponseGenerated::class =>
-            '✅ [PSR-3] Completed extraction: {responseClass}',
+            '✅ [SYMFONY] Completed extraction: {responseClass}',
     ], channel: 'instructor'))
     ->write(new PsrLoggerWriter($logger))
     ->build();
 
-echo "📋 About to demonstrate PSR-3 logging with functional pipeline...\n\n";
-
-echo "🚀 Starting StructuredOutput extraction...\n";
+echo "🔧 Symfony logging pipeline configured\n";
+echo "📋 About to execute StructuredOutput with logging...\n\n";
 
 class User
 {
@@ -48,6 +60,7 @@ class User
 }
 
 // Extract data with logging
+echo "🚀 Starting StructuredOutput extraction...\n";
 $user = (new StructuredOutput)
     ->using('openai')
     ->wiretap($pipeline)
@@ -62,6 +75,6 @@ echo "📊 Result: User: {$user->name}, Age: {$user->age}\n";
 // Example format:
 // ### Sample Output
 // ```
-// [2025-12-07T01:18:13.475202+00:00] instructor.DEBUG: 🎯 [PSR-3] Starting extraction: User
-// [2025-12-07T01:18:14.659417+00:00] instructor.DEBUG: ✅ [PSR-3] Completed extraction: User
+// [2025-12-07 01:18:13] instructor.DEBUG: 🔄 [Symfony] Starting extraction: User
+// [2025-12-07 01:18:14] instructor.DEBUG: ✅ [Symfony] Completed extraction: User
 // ```
