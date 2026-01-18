@@ -1,13 +1,4 @@
----
-title: 'Inference and tool use (ReAct driver)'
-docname: 'tool_use_react'
----
-
-## Overview
-
-### Example
-```php
-\<\?php
+<?php
 require 'examples/boot.php';
 
 use Cognesy\Addons\StepByStep\Continuation\ContinuationCriteria;
@@ -95,4 +86,3 @@ $result = $finalState->currentStep()->outputMessages()->toString();
 print("RESULT: " . $result . "\n");
 
 ?>
-```

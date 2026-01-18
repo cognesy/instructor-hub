@@ -1,18 +1,4 @@
----
-title: 'OpenCode CLI - Streaming'
-docname: 'opencode_streaming'
----
-
-## Overview
-
-This example demonstrates real-time streaming output from the OpenCode CLI.
-Events are parsed and displayed as they arrive, providing live feedback
-on the agent's progress.
-
-## Example
-
-```php
-\<\?php
+<?php
 require 'examples/boot.php';
 
 use Cognesy\AgentCtrl\OpenCode\Application\Builder\OpenCodeCommandBuilder;
@@ -24,6 +10,12 @@ use Cognesy\AgentCtrl\OpenCode\Domain\Dto\StreamEvent\ToolUseEvent;
 use Cognesy\AgentCtrl\OpenCode\Domain\Dto\StreamEvent\StepFinishEvent;
 use Cognesy\AgentCtrl\OpenCode\Domain\Enum\OutputFormat;
 use Cognesy\AgentCtrl\Common\Execution\SandboxCommandExecutor;
+use Cognesy\Utils\Sandbox\Utils\ProcUtils;
+
+if (ProcUtils::findOnPath('opencode', ProcUtils::defaultBinPaths()) === null) {
+    print("OpenCode CLI not found. Install OpenCode CLI before running this example.\n");
+    exit(1);
+}
 
 // Create a request - using JSON format for streaming events
 $request = new OpenCodeRequest(
@@ -108,4 +100,3 @@ if ($execResult->exitCode() !== 0) {
     exit(1);
 }
 ?>
-```
