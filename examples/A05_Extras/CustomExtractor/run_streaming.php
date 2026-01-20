@@ -22,7 +22,6 @@ class XmlJsonExtractor implements CanExtractResponse
     #[\Override]
     public function extract(ExtractionInput $input): array
     {
-        // Match: <json>{"key": "value"}</json>
         $pattern = sprintf('/<%s>(.*?)<\/%s>/s', $this->tagName, $this->tagName);
 
         if (!preg_match($pattern, $input->content, $matches)) {
@@ -54,49 +53,27 @@ class XmlJsonExtractor implements CanExtractResponse
     }
 }
 
-// Define schema
 class Person {
     public string $name;
     public int $age;
     public string $city;
 }
 
-// Simulate an LLM response with XML-wrapped JSON
-$xmlWrappedResponse = <<<EOT
-Here is the extracted information:
+echo "=== Example 2: Custom extractor with streaming updates ===\n\n";
 
-<json>
-{
-    "name": "Alice Johnson",
-    "age": 28,
-    "city": "San Francisco"
-}
-</json>
-
-The data has been successfully extracted from the input.
-EOT;
-
-echo "=== Example 1: Custom extractor for XML-wrapped JSON (sync) ===\n\n";
-echo "Raw LLM response:\n";
-echo str_repeat('-', 50) . "\n";
-echo $xmlWrappedResponse . "\n";
-echo str_repeat('-', 50) . "\n\n";
-
-// Use custom extractors
-// DirectJson is tried first (will fail), then XmlJsonExtractor (will succeed)
-$person = (new StructuredOutput)
+$stream = (new StructuredOutput)
     ->withResponseClass(Person::class)
     ->withExtractors(
-        new DirectJsonExtractor(),      // Try direct parsing first
-        new XmlJsonExtractor('json'),   // Fall back to XML wrapper extraction
+        new DirectJsonExtractor(),
+        new XmlJsonExtractor('json'),
     )
-    ->withMessages("Extract: Alice Johnson, 28 years old, lives in San Francisco")
-    ->get();
+    ->withMessages("Extract person data...")
+    ->stream();
 
-dump($person);
+foreach ($stream->responses() as $partial) {
+    $name = $partial->name ?? '...';
+    echo "Partial: {$name}\n";
+}
 
-echo "\nExtracted data:\n";
-echo "Name: {$person->name}\n";
-echo "Age: {$person->age}\n";
-echo "City: {$person->city}\n";
-?>
+$person = $stream->finalValue();
+echo "Final: {$person->name}\n";
