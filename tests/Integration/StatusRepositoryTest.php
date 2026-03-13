@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Cognesy\InstructorHub\Tests\Unit;
+namespace Cognesy\InstructorHub\Tests\Integration;
 
 use Cognesy\InstructorHub\Services\StatusRepository;
 
